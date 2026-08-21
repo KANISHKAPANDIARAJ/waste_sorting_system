@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Smart Waste Segregation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Top Header Row -->
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+        <h2 class="fw-bold m-0" style="font-size: 1.6rem; letter-spacing: -0.01em; color: var(--text-main);">Dashboard</h2>
+        <p class="text-muted m-0 small">Real-time overview of waste segregation and sorting system</p>
+    </div>
+    
+    <!-- Device Selection Header Widget -->
+    <div class="dropdown">
+        <button class="btn btn-white border bg-white dropdown-toggle shadow-sm py-2 px-3 text-start d-flex flex-column" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 250px; border-radius: 8px;">
+            <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">ACTIVE CONVEYOR</span>
+            <span class="fw-semibold" style="font-size: 0.85rem; color: var(--text-main);">
+                Device ID: {{ device.device_id if device else "SIM-001" }} <span class="mx-1">|</span> Loc: {{ device.location if device else "Main Unit" }}
+            </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item active" href="#"><i class="fa-solid fa-microchip me-2 text-primary"></i> SIM-001 (Conveyor Line A)</a></li>
+            <li><a class="dropdown-item disabled" href="#"><i class="fa-solid fa-microchip me-2"></i> HW-002 (Offline - Hardware Unit)</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- 4 KPI Cards Grid -->
+<div class="kpi-grid mb-4">
+    <!-- KPI 1: Sorting Accuracy -->
+    <div class="dashboard-card kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-title-wrap">
+                <span>Sorting Accuracy</span>
+                <span class="kpi-subtext">Accuracy vs last shift</span>
+            </div>
+            <i class="fa-solid fa-bullseye text-primary"></i>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value" id="kpi-accuracy">{{ kpis.accuracy }}</span>
+            <!-- Sparkline visualization (simulated with SVG path) -->
+            <svg class="kpi-sparkline" viewBox="0 0 100 30">
+                <path d="M0,25 Q15,5 30,22 T60,10 T90,2 T100,5" fill="none" stroke="#0ea5e9" stroke-width="2"></path>
+                <circle cx="90" cy="2" r="3" fill="#0ea5e9"></circle>
+            </svg>
+        </div>
+        <div class="kpi-footer positive">
+            <i class="fa-solid fa-arrow-trend-up"></i>
+            <span>Throughput: 120 items/min</span>
+        </div>
+    </div>
+
+    <!-- KPI 2: Operational Savings -->
+    <div class="dashboard-card kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-title-wrap">
+                <span>Operational Savings</span>
+                <span class="kpi-subtext">Material Value Salvaged Today</span>
+            </div>
+            <i class="fa-solid fa-hand-holding-dollar text-success"></i>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value" id="kpi-savings">{{ kpis.savings }}</span>
+            <svg class="kpi-sparkline" viewBox="0 0 100 30">
+                <path d="M0,28 L10,25 L25,18 L40,22 L55,10 L70,8 L85,2 L100,1" fill="none" stroke="#22c55e" stroke-width="2"></path>
+                <circle cx="100" cy="1" r="3" fill="#22c55e"></circle>
+            </svg>
+        </div>
+        <div class="kpi-footer positive">
+            <i class="fa-solid fa-arrow-trend-up"></i>
+            <span>Trend versus baseline</span>
+        </div>
+    </div>
+
+    <!-- KPI 3: Contamination Risk -->
+    <div class="dashboard-card kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-title-wrap">
+                <span>Contamination Risk</span>
+                <span class="kpi-subtext">Cross-Contamination %</span>
+            </div>
+            <!-- Switch toggle as in screenshot -->
+            <label class="switch">
+                <input type="checkbox" checked disabled>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value" id="kpi-contamination">{{ kpis.contamination_risk }}</span>
+            <span class="small text-success fw-semibold">Within limits</span>
+        </div>
+        <div class="kpi-footer positive">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>All filters operating normally</span>
+        </div>
+    </div>
+
+    <!-- KPI 4: Downtime -->
+    <div class="dashboard-card kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-title-wrap">
+                <span>Downtime (Last 24h)</span>
+                <span class="kpi-subtext">Device offline duration</span>
+            </div>
+            <i class="fa-solid fa-clock-rotate-left text-warning"></i>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value" id="kpi-downtime">{{ kpis.downtime }}</span>
+            <span class="small text-muted fw-semibold">Hours offline</span>
+        </div>
+        <div class="kpi-footer neutral">
+            <i class="fa-solid fa-square-poll-vertical"></i>
+            <span>0 connection drops</span>
+        </div>
+    </div>
+</div>
+
+<!-- Middle Row: Computer Vision & Bins Fill Levels -->
+<div class="dashboard-mid-grid mb-4">
+    <!-- Advanced Computer Vision Card -->
+    <div class="dashboard-card">
+        <div class="card-title">
+            <span><i class="fa-solid fa-eye me-2 text-primary"></i> Advanced Computer Vision</span>
+        </div>
+        <div class="cv-panel-body">
+            <!-- Camera/Detection Video Display Area -->
+            <div class="cv-feed-container" id="cv-feed-container">
+                {% if current_detection and current_detection.image_path %}
+                <img id="cv-feed-img" class="cv-video-frame" src="/{{ current_detection.image_path }}" alt="Uploaded waste image">
+                {% else %}
+                <div id="cv-empty-state" class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4" style="min-height:260px;background:#f8fafc;">
+                    <i class="fa-solid fa-image fa-2x text-muted mb-3"></i>
+                    <strong class="text-dark">Waiting for Waste Image</strong>
+                    <span class="small text-muted mt-1">Upload a waste image to begin classification and sorting.</span>
+                </div>
+                <img id="cv-feed-img" class="cv-video-frame d-none" src="" alt="Uploaded waste image">
+                {% endif %}
+                
+                <!-- Camera overlays -->
+                <div class="cv-feed-overlay">
+                    <div class="cv-overlay-top">
+                        <span>FPS: 30</span>
+                        <span>Res: 1280x720</span>
+                        <span id="cv-overlay-inference">Inference: {% if current_detection %}{{ (current_detection.processing_time*1000)|int }}ms{% else %}--{% endif %}</span>
+                    </div>
+                    <div class="cv-overlay-bottom">
+                        <span>CAM_01 - Conveyor Line A</span>
+                    </div>
+                </div>
+                
+                <!-- Bounding Box Overlay -->
+                {% if current_detection %}
+                <div class="cv-bounding-box" id="cv-dynamic-bbox" style="top: 30%; left: 35%; width: 30%; height: 40%; display: block; border-color: {% if current_detection.material == 'Plastic' %}#0284c7{% elif current_detection.material == 'Paper' %}#eab308{% elif current_detection.material == 'Metal' %}#7c3aed{% elif current_detection.material == 'Organic' %}#16a34a{% else %}#dc2626{% endif %};">
+                    <span class="cv-box-label" style="background-color: {% if current_detection.material == 'Plastic' %}#0284c7{% elif current_detection.material == 'Paper' %}#eab308{% elif current_detection.material == 'Metal' %}#7c3aed{% elif current_detection.material == 'Organic' %}#16a34a{% else %}#dc2626{% endif %}; color: #fff;">
+                        {{ current_detection.material }} ({{ (current_detection.confidence*100)|int }}%)
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Real user-upload workflow -->
+            <div class="p-3 border-top border-bottom bg-white" id="waste-upload-panel">
+                <form id="waste-upload-form" enctype="multipart/form-data">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <label for="waste-image-input" class="btn btn-outline-primary btn-sm mb-0">
+                            <i class="fa-solid fa-upload me-1"></i> Choose Waste Image
+                        </label>
+                        <input id="waste-image-input" name="file" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="d-none">
+                        <button id="waste-process-btn" type="submit" class="btn btn-primary btn-sm" disabled>
+                            <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Process Waste
+                        </button>
+                        <span id="waste-upload-status" class="small text-muted">No image selected.</span>
+                    </div>
+                    <div id="waste-preview-wrap" class="mt-2 d-none">
+                        <img id="waste-preview" class="img-fluid rounded border" style="max-height:120px;" alt="Selected waste preview">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Metadata Panel -->
+            <div class="cv-meta-details">
+                <div class="cv-meta-items">
+                    <div class="cv-meta-item">
+                        <span class="cv-meta-label">Material Class</span>
+                        <span class="cv-meta-val highlight {% if current_detection %}{{ current_detection.material.lower() }}{% endif %}" id="cv-val-material">
+                            {{ current_detection.material if current_detection else "N/A" }}
+                        </span>
+                    </div>
+                    <div class="cv-meta-item">
+                        <span class="cv-meta-label">Confidence Score</span>
+                        <span class="cv-meta-val" id="cv-val-confidence">
+                            {{ (current_detection.confidence * 100)|round(1) if current_detection else "0.0" }}%
+                        </span>
+                    </div>
+                    <div class="cv-meta-item">
+                        <span class="cv-meta-label">Assigned Waste Bin</span>
+                        <span class="cv-meta-val" id="cv-val-bin">
+                            {{ current_detection.assigned_bin if current_detection else "N/A" }}
+                        </span>
+                    </div>
+                    <div class="cv-meta-item">
+                        <span class="cv-meta-label">Classification Time</span>
+                        <span class="cv-meta-val" id="cv-val-time">
+                            {{ current_detection.timestamp.strftime('%I:%M:%S %p') if current_detection else "N/A" }}
+                        </span>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('dashboard.detections_view') }}" class="cv-btn-details">
+                    View Details
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bin Status Card -->
+    <div class="dashboard-card">
+        <div class="card-title">
+            <span><i class="fa-solid fa-trash-can me-2 text-primary"></i> Bin Status</span>
+            <a href="{{ url_for('dashboard.bin_status_view') }}" class="btn btn-sm btn-light border py-1 px-2 text-muted" style="font-size: 0.75rem;">View All</a>
+        </div>
+        
+        <!-- Bins Thermometer Panel -->
+        <div class="bins-container">
+            {% for bin in bins %}
+            <div class="bin-column" data-material="{{ bin.material_type }}">
+                <i class="fa-solid fa-trash bin-header-icon" style="color: {% if bin.material_type == 'Plastic' %}var(--color-plastic){% elif bin.material_type == 'Paper' %}var(--color-paper){% elif bin.material_type == 'Metal' %}var(--color-metal){% elif bin.material_type == 'Organic' %}var(--color-organic){% else %}var(--color-other){% endif %};"></i>
+                
+                <div class="bin-thermometer">
+                    <!-- Gauge ticks -->
+                    <div class="bin-ticks">
+                        <div class="bin-tick-mark"></div>
+                        <div class="bin-tick-mark right"></div>
+                        <div class="bin-tick-mark"></div>
+                        <div class="bin-tick-mark right"></div>
+                        <div class="bin-tick-mark"></div>
+                    </div>
+                    <!-- Fluid height matching fill percent -->
+                    <div class="bin-fill-fluid" style="height: {{ bin.fill_percentage }}%;"></div>
+                </div>
+                
+                <span class="bin-fill-label">{{ bin.fill_percentage|int }}% Full</span>
+                <span class="bin-label" style="font-size: 0.75rem; color: var(--text-muted);">{{ bin.material_type }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Row: Historical Chart and Recent Detections Table -->
+<div class="dashboard-bottom-grid">
+    <!-- Waste overview Chart -->
+    <div class="dashboard-card">
+        <div class="card-title">
+            <span><i class="fa-solid fa-chart-area me-2 text-primary"></i> Waste Detection Overview</span>
+            <select class="form-select form-select-sm" id="chart-period-select" style="width: auto; font-size: 0.75rem;">
+                <option value="today" selected>Today</option>
+                <option value="7days">Last 7 Days</option>
+                <option value="30days">Last 30 Days</option>
+            </select>
+        </div>
+        <div style="height: 250px; position: relative;">
+            <canvas id="wasteChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Detections Table Card -->
+    <div class="dashboard-card">
+        <div class="card-title">
+            <span><i class="fa-solid fa-list me-2 text-primary"></i> Recent Detections</span>
+            <a href="{{ url_for('dashboard.detections_view') }}" class="btn btn-sm btn-light border py-1 px-2 text-muted" style="font-size: 0.75rem;">View All</a>
+        </div>
+        <div class="custom-table-container">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Material</th>
+                        <th>Conf.</th>
+                        <th>Assigned Bin</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-detections-tbody">
+                    {% for det in recent_detections %}
+                    <tr>
+                        <td>#{{ det.id }}</td>
+                        <td><strong>{{ det.material }}</strong></td>
+                        <td>{{ (det.confidence * 100)|round(1) }}%</td>
+                        <td>{{ det.assigned_bin }}</td>
+                        <td>{{ det.timestamp.strftime('%I:%M:%S %p') }}</td>
+                        <td>
+                            <span class="badge badge-{{ det.sorting_status.lower() }}">{{ det.sorting_status }}</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr class="empty-row">
+                        <td colspan="6" class="text-center text-muted py-4">No detections yet. Upload a waste image to begin.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ChartJS Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Dashboard specific script -->
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

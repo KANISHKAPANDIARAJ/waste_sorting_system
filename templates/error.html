@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Smart Waste System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f8fafc;
+        }
+        
+        .error-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background-color: #0284c7;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0369a1;
+        }
+        
+        .error-icon {
+            color: #dc2626;
+            filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.4));
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <i class="fa-solid fa-triangle-exclamation fa-4x error-icon mb-4"></i>
+        <h1 class="fw-bold">404</h1>
+        <h4 class="fw-semibold mb-3">Resource Not Found</h4>
+        <p class="text-muted mb-4">The page or hardware telemetry node you requested does not exist or has been disconnected from the server context.</p>
+        
+        <a href="/dashboard" class="btn btn-primary btn-lg px-4">
+            <i class="fa-solid fa-arrow-left me-2"></i> Return to Dashboard
+        </a>
+    </div>
+</body>
+</html>

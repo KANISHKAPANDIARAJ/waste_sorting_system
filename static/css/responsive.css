@@ -1,0 +1,121 @@
+/* Media queries for responsive layout adjustments */
+
+@media (max-width: 1200px) {
+    .dashboard-mid-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1024px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .app-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 1rem;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .brand-section {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .nav-links {
+        display: none; /* Can be toggled using active classes */
+    }
+
+    .system-info-panel {
+        display: none;
+    }
+
+    .main-content {
+        height: auto;
+        overflow-y: visible;
+    }
+
+    .topbar {
+        padding: 0 1rem;
+        height: 60px;
+    }
+
+    .menu-toggle-btn {
+        display: block;
+    }
+
+    .page-container {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .cv-panel-body {
+        grid-template-columns: 1fr;
+    }
+
+    .bins-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .bin-column {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .bin-column:last-child {
+        border-bottom: none;
+    }
+
+    .bin-thermometer {
+        width: 120px;
+        height: 24px;
+        transform: rotate(0deg);
+        border-radius: 6px;
+    }
+
+    .bin-fill-fluid {
+        height: 100% !important;
+        width: 0%;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 6px 0 0 6px;
+    }
+
+    /* Adjust column alignment on mobile */
+    .bin-ticks {
+        flex-direction: row;
+        padding: 0 10px;
+    }
+
+    .bin-tick-mark {
+        width: 1px;
+        height: 6px;
+    }
+}

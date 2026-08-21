@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Detections History - Smart Waste Segregation{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+        <h2 class="fw-bold m-0" style="font-size: 1.6rem; color: var(--text-main);">Detections</h2>
+        <p class="text-muted m-0 small">Query and review waste categorization history logs</p>
+    </div>
+</div>
+
+<!-- Filters Bar Card -->
+<div class="dashboard-card mb-4">
+    <form method="GET" action="{{ url_for('dashboard.detections_view') }}" class="row g-3">
+        <div class="col-md-3">
+            <label for="material" class="form-label small text-muted font-weight-bold">MATERIAL TYPE</label>
+            <select class="form-select form-select-sm" id="material" name="material">
+                <option value="">-- All Materials --</option>
+                <option value="Plastic" {% if material == 'Plastic' %}selected{% endif %}>Plastic</option>
+                <option value="Paper" {% if material == 'Paper' %}selected{% endif %}>Paper</option>
+                <option value="Metal" {% if material == 'Metal' %}selected{% endif %}>Metal</option>
+                <option value="Organic" {% if material == 'Organic' %}selected{% endif %}>Organic</option>
+                <option value="Other" {% if material == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label for="status" class="form-label small text-muted font-weight-bold">SORTING STATUS</label>
+            <select class="form-select form-select-sm" id="status" name="status">
+                <option value="">-- All Statuses --</option>
+                <option value="SORTED" {% if status == 'SORTED' %}selected{% endif %}>Sorted</option>
+                <option value="FLAGGED" {% if status == 'FLAGGED' %}selected{% endif %}>Flagged</option>
+                <option value="DIVERTED" {% if status == 'DIVERTED' %}selected{% endif %}>Diverted</option>
+                <option value="FAILED" {% if status == 'FAILED' %}selected{% endif %}>Failed</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label for="confidence" class="form-label small text-muted font-weight-bold">MIN CONFIDENCE</label>
+            <select class="form-select form-select-sm" id="confidence" name="confidence">
+                <option value="0.0" {% if confidence == 0.0 %}selected{% endif %}>No Minimum</option>
+                <option value="0.60" {% if confidence == 0.60 %}selected{% endif %}>&gt; 60%</option>
+                <option value="0.70" {% if confidence == 0.70 %}selected{% endif %}>&gt; 70%</option>
+                <option value="0.80" {% if confidence == 0.80 %}selected{% endif %}>&gt; 80%</option>
+                <option value="0.90" {% if confidence == 0.90 %}selected{% endif %}>&gt; 90%</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-semibold">
+                <i class="fa-solid fa-filter me-1"></i> Apply Filter
+            </button>
+            <a href="{{ url_for('dashboard.detections_view') }}" class="btn btn-light border btn-sm w-100 py-2 text-muted fw-semibold">
+                Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- History log table -->
+<div class="dashboard-card">
+    <div class="custom-table-container">
+        <table class="custom-table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Image</th>
+                    <th>Material</th>
+                    <th>Confidence</th>
+                    <th>Assigned Bin</th>
+                    <th>Timestamp</th>
+                    <th>Inference</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for det in pagination.items %}
+                <tr>
+                    <td>#{{ det.id }}</td>
+                    <td>
+                        <img class="table-img-preview" src="/{{ det.image_path }}" alt="Trash Preview" onerror="this.src='/static/images/logo.png'; this.style.opacity=0.2;">
+                    </td>
+                    <td><strong>{{ det.material }}</strong></td>
+                    <td>{{ (det.confidence * 100)|round(1) }}%</td>
+                    <td>{{ det.assigned_bin }}</td>
+                    <td>{{ det.timestamp.strftime('%Y-%m-%d %I:%M:%S %p') }}</td>
+                    <td>{{ (det.processing_time * 1000)|round(1) }} ms</td>
+                    <td>
+                        <span class="badge badge-{{ det.sorting_status.lower() }}">{{ det.sorting_status }}</span>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-light border text-muted view-details-btn py-1 px-2"
+                                data-id="{{ det.id }}"
+                                data-material="{{ det.material }}"
+                                data-confidence="{{ det.confidence }}"
+                                data-bin="{{ det.assigned_bin }}"
+                                data-time="{{ det.timestamp.strftime('%Y-%m-%d %I:%M:%S %p') }}"
+                                data-status="{{ det.sorting_status }}"
+                                data-speed="{{ det.processing_time }}"
+                                data-model="{{ det.model_version }}"
+                                data-img="{{ det.image_path }}">
+                            <i class="fa-solid fa-expand me-1"></i> Detail
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-5">No detections matching filters found. Try starting the simulator.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Table Pagination -->
+    {% if pagination.pages > 1 %}
+    <nav class="d-flex justify-content-between align-items-center mt-4">
+        <span class="text-muted small">Showing page {{ pagination.page }} of {{ pagination.pages }}</span>
+        <ul class="pagination pagination-sm m-0">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-line page-link" href="{{ url_for('dashboard.detections_view', page=pagination.prev_num, material=material, status=status, confidence=confidence) }}">Prev</a>
+            </li>
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard.detections_view', page=page_num, material=material, status=status, confidence=confidence) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-line page-link" href="{{ url_for('dashboard.detections_view', page=pagination.next_num, material=material, status=status, confidence=confidence) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Bootstrap 5 Details Dialog Modal -->
+<div class="modal fade" id="detectionDetailsModal" tabindex="-1" aria-labelledby="detectionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white py-3">
+                <h5 class="modal-title fw-bold" id="det-modal-title">Detection Record #--</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="background-color: var(--bg-body);">
+                <div class="row g-4">
+                    <!-- Image panel -->
+                    <div class="col-md-6">
+                        <div class="text-center bg-black rounded p-2 d-flex align-items-center justify-content-center" style="height: 300px; border: 1px solid var(--border-color);">
+                            <img id="det-modal-img" class="img-fluid rounded" style="max-height: 100%; object-fit: contain;" src="" alt="Specimen Capture">
+                        </div>
+                    </div>
+                    
+                    <!-- Meta List -->
+                    <div class="col-md-6">
+                        <div class="card p-3 bg-white h-100 border shadow-sm">
+                            <h6 class="fw-bold text-muted border-bottom pb-2 mb-3">CLASSIFICATION TELEMETRIES</h6>
+                            
+                            <div class="cv-meta-items">
+                                <div class="cv-meta-item mb-2">
+                                    <span class="cv-meta-label">Material Category</span>
+                                    <span id="det-modal-material" class="cv-meta-val highlight">--</span>
+                                </div>
+                                <div class="cv-meta-item mb-2">
+                                    <span class="cv-meta-label">Model Inference Confidence</span>
+                                    <strong id="det-modal-confidence" class="fs-5">0.0%</strong>
+                                </div>
+                                <div class="cv-meta-item mb-2">
+                                    <span class="cv-meta-label">Assigned Bin Destination</span>
+                                    <span id="det-modal-bin" class="cv-meta-val">--</span>
+                                </div>
+                                <div class="cv-meta-item mb-2">
+                                    <span class="cv-meta-label">Timestamp (Server Time)</span>
+                                    <span id="det-modal-time" class="cv-meta-val text-muted">--</span>
+                                </div>
+                                <div class="cv-meta-item mb-2">
+                                    <span class="cv-meta-label">Processing Inference Duration</span>
+                                    <span id="det-modal-speed" class="cv-meta-val">--</span>
+                                </div>
+                                <div class="cv-meta-item mb-2">
+                                    <span class="cv-meta-label">Model Pipeline Version</span>
+                                    <span id="det-modal-model" class="cv-meta-val text-muted font-monospace">--</span>
+                                </div>
+                                <div class="cv-meta-item">
+                                    <span class="cv-meta-label">Sorting Verification Status</span>
+                                    <div>
+                                        <span id="det-modal-status" class="badge">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close Dialog</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/detections.js') }}"></script>
+{% endblock %}

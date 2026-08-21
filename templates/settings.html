@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - Smart Waste Segregation{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+        <h2 class="fw-bold m-0" style="font-size: 1.6rem; color: var(--text-main);">Settings</h2>
+        <p class="text-muted m-0 small">Adjust classification rules and container capacities</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Configuration parameters form -->
+    <div class="col-lg-8 col-md-10">
+        <div class="dashboard-card">
+            <div class="card-title border-bottom pb-2">
+                <span><i class="fa-solid fa-sliders me-2 text-primary"></i> System Parameters</span>
+            </div>
+            
+            <form action="{{ url_for('dashboard.settings_view') }}" method="POST" class="mt-4">
+                <!-- Device meta parameters -->
+                <h6 class="fw-bold text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.05em;">DEVICE REGISTRY METADATA</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="device_name" class="form-label small text-muted font-weight-bold">DEVICE IDENTIFIER NAME</label>
+                        <input type="text" class="form-control form-control-sm" id="device_name" name="device_name" value="{{ settings.device_name }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="device_location" class="form-label small text-muted font-weight-bold">CONVEYOR LOCATION</label>
+                        <input type="text" class="form-control form-control-sm" id="device_location" name="device_location" value="{{ settings.device_location }}" required>
+                    </div>
+                </div>
+                
+                <!-- Business logic parameters -->
+                <h6 class="fw-bold text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.05em;">DECISION ENGINE ALGORITHMS</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="classification_threshold" class="form-label small text-muted font-weight-bold">CLASSIFIER CONFIDENCE THRESHOLD (0.0 to 1.0)</label>
+                        <input type="number" step="0.05" min="0.10" max="0.95" class="form-control form-control-sm" id="classification_threshold" name="classification_threshold" value="{{ settings.classification_threshold }}" required>
+                        <span class="text-muted small" style="font-size: 0.65rem;">Diverts specimen into Flagged Bin if confidence drops below this value.</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="simulator_interval" class="form-label small text-muted font-weight-bold">SIMULATOR FREQUENCY INTERVAL (SECONDS)</label>
+                        <input type="number" min="1" max="60" class="form-index form-control form-control-sm" id="simulator_interval" name="simulator_interval" value="{{ settings.simulator_interval }}" required>
+                        <span class="text-muted small" style="font-size: 0.65rem;">Conveyor specimen injection rate.</span>
+                    </div>
+                </div>
+                
+                <h6 class="fw-bold text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.05em;">CONTAINER FILL LIMIT ALERTS (%)</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="bin_warning_threshold" class="form-label small text-muted font-weight-bold">WARNING ALERTS TRIGGER LEVEL</label>
+                        <input type="number" min="10" max="89" class="form-control form-control-sm" id="bin_warning_threshold" name="bin_warning_threshold" value="{{ settings.bin_warning_threshold }}" required>
+                        <span class="text-muted small" style="font-size: 0.65rem;">Dispatches a warning toast and logs a warning status.</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="bin_full_threshold" class="form-label small text-muted font-weight-bold">HALT LINE LIMIT (CRITICAL FULL)</label>
+                        <input type="number" min="70" max="100" class="form-control form-control-sm" id="bin_full_threshold" name="bin_full_threshold" value="{{ settings.bin_full_threshold }}" required>
+                        <span class="text-muted small" style="font-size: 0.65rem;">Triggers lines stop conveyor halt commands.</span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary py-2 px-4 fw-semibold mt-2">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Configuration
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Monitoring - Smart Waste Segregation{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sensor-card {
+        border-left: 4px solid #3b82f6;
+    }
+    .console-log {
+        background-color: #0f172a;
+        color: #e2e8f0;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.8rem;
+        height: 250px;
+        overflow-y: auto;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        padding: 1rem;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+    .live-feed-preview {
+        max-width: 100%;
+        max-height: 280px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+        <h2 class="fw-bold m-0" style="font-size: 1.6rem; color: var(--text-main);">Live Monitoring</h2>
+        <p class="text-muted m-0 small">Real-time control and hardware simulation monitor</p>
+    </div>
+    
+    <!-- Simulator Status Banner -->
+    <div class="d-flex align-items-center gap-2 border bg-white shadow-sm py-2 px-3" style="border-radius: 8px;">
+        <span class="small text-muted font-weight-bold" style="font-size: 0.7rem; text-transform: uppercase;">SIMULATOR STATUS:</span>
+        <div class="status-dot offline" id="sim-active-dot" style="width: 8px; height: 8px;"></div>
+        <span class="fw-bold text-dark" id="simulator-status-text" style="font-size: 0.8rem;">CHECKING...</span>
+    </div>
+</div>
+
+<!-- Controls panel -->
+<div class="row g-4 mb-4">
+    <!-- Simulator controller -->
+    <div class="col-md-4">
+        <div class="dashboard-card h-100">
+            <div class="card-title">
+                <span><i class="fa-solid fa-gamepad me-2 text-primary"></i> Simulation Engine</span>
+            </div>
+            <p class="text-muted small mb-4">Toggle background telemetry threads to generate waste image uploads, weight, temperature, and moisture levels.</p>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success w-100 py-2 fw-semibold" id="sim-start-btn" disabled>
+                    <i class="fa-solid fa-play me-1"></i> Start Sim
+                </button>
+                <button class="btn btn-danger w-100 py-2 fw-semibold" id="sim-stop-btn" disabled>
+                    <i class="fa-solid fa-stop me-1"></i> Stop Sim
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Real-time sensor indicators -->
+    <div class="col-md-8">
+        <div class="dashboard-card h-100">
+            <div class="card-title">
+                <span><i class="fa-solid fa-gauge-high me-2 text-primary"></i> Telemetry Parameters (SIM-001)</span>
+            </div>
+            <div class="row g-3">
+                <div class="col-sm-4">
+                    <div class="card sensor-card p-3 bg-light shadow-sm">
+                        <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">LOAD CELL WEIGHT</span>
+                        <h3 class="fw-bold text-dark mt-2 mb-1" id="live-val-weight">--</h3>
+                        <span class="text-muted small" style="font-size: 0.65rem;">Scale weight value</span>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="card sensor-card p-3 bg-light shadow-sm" style="border-left-color: #10b981;">
+                        <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">MOISTURE LEVEL</span>
+                        <h3 class="fw-bold text-dark mt-2 mb-1" id="live-val-moisture">--</h3>
+                        <span class="text-muted small" style="font-size: 0.65rem;">Conveyor moisture %</span>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="card sensor-card p-3 bg-light shadow-sm" style="border-left-color: #f59e0b;">
+                        <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">DEVICE TEMP</span>
+                        <h3 class="fw-bold text-dark mt-2 mb-1" id="live-val-temp">--</h3>
+                        <span class="text-muted small" style="font-size: 0.65rem;">Ambient hardware temp</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-3 text-muted small" style="font-size: 0.7rem;">
+                <span>Last Telemetry Heartbeat: <strong id="live-val-heartbeat">--</strong></span>
+                <span>Active Session Uptime: <strong id="live-val-uptime">{{ uptime }}</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Image stream card -->
+    <div class="col-md-5">
+        <div class="dashboard-card h-100">
+            <div class="card-title">
+                <span><i class="fa-solid fa-image me-2 text-primary"></i> Current Waste Specimen</span>
+            </div>
+            <div class="text-center bg-black rounded p-3 mb-3 d-flex align-items-center justify-content-center" style="height: 280px; border: 1px solid var(--border-color);">
+                {% if recent_detections %}
+                <img id="live-det-img" class="live-feed-preview" src="/{{ recent_detections[0].image_path }}" alt="Current Waste Preview">
+                {% else %}
+                <img id="live-det-img" class="live-feed-preview" src="{{ url_for('static', filename='images/logo.png') }}" alt="Current Waste Preview" style="opacity: 0.2;">
+                {% endif %}
+            </div>
+            
+            <div class="row g-2 text-center" style="font-size: 0.8rem;">
+                <div class="col-4 border-end">
+                    <span class="text-muted d-block small">MATERIAL</span>
+                    <strong id="live-det-material" class="badge badge-{% if recent_detections %}{{ recent_detections[0].sorting_status.lower() }}{% else %}sorted{% endif %}">
+                        {{ recent_detections[0].material if recent_detections else "--" }}
+                    </strong>
+                </div>
+                <div class="col-4 border-end">
+                    <span class="text-muted d-block small">CONFIDENCE</span>
+                    <strong id="live-det-confidence" class="text-dark">
+                        {{ (recent_detections[0].confidence * 100)|round(1) if recent_detections else "--" }}%
+                    </strong>
+                </div>
+                <div class="col-4">
+                    <span class="text-muted d-block small">ASSIGNED BIN</span>
+                    <strong id="live-det-bin" class="text-dark">{{ recent_detections[0].assigned_bin if recent_detections else "--" }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Logging Terminal -->
+    <div class="col-md-7">
+        <div class="dashboard-card h-100">
+            <div class="card-title d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-terminal me-2 text-primary"></i> Live Event Logging Console</span>
+                <button class="btn btn-sm btn-light border py-1 px-2 text-muted" onclick="document.getElementById('live-events-stream').innerHTML = ''" style="font-size: 0.7rem;">Clear Log</button>
+            </div>
+            <div class="console-log" id="live-events-stream">
+                <div class="log-item" style="color: #64748b;">[System Startup] Waiting for simulator activity telemetry streams...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/live_monitoring.js') }}"></script>
+{% endblock %}

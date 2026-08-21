@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - Smart Waste Segregation{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+        <h2 class="fw-bold m-0" style="font-size: 1.6rem; color: var(--text-main);">Analytics</h2>
+        <p class="text-muted m-0 small">Aggregated sorting statistics and waste distributions</p>
+    </div>
+</div>
+
+<!-- Detailed stats grid -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="dashboard-card text-center p-4">
+            <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">TOTAL WASTE PROCESSED</span>
+            <h2 class="fw-bold text-dark mt-2 mb-1" id="stat-total-items">0</h2>
+            <span class="text-muted small" style="font-size: 0.65rem;">Total items categorized</span>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="dashboard-card text-center p-4">
+            <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">AVERAGE INFERENCE SPEED</span>
+            <h2 class="fw-bold text-dark mt-2 mb-1" id="stat-avg-inference">0 ms</h2>
+            <span class="text-muted small" style="font-size: 0.65rem;">Mean ML classifier runtime</span>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="dashboard-card text-center p-4">
+            <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">ESTIMATED RECYCLE RATE</span>
+            <h2 class="fw-bold text-dark mt-2 mb-1">88.5%</h2>
+            <span class="text-muted small" style="font-size: 0.65rem;">Recyclable vs rejects proportion</span>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="dashboard-card text-center p-4">
+            <span class="small text-muted font-weight-bold" style="font-size: 0.65rem; text-transform: uppercase;">ENERGY SAVINGS (EST)</span>
+            <h2 class="fw-bold text-dark mt-2 mb-1">1.2 MWh</h2>
+            <span class="text-muted small" style="font-size: 0.65rem;">Calculated carbon offset Equivalent</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Material distribution doughnut -->
+    <div class="col-md-6">
+        <div class="dashboard-card h-100">
+            <div class="card-title">
+                <span><i class="fa-solid fa-chart-pie me-2 text-primary"></i> Material Distribution</span>
+            </div>
+            <div style="height: 300px; position: relative;">
+                <canvas id="analyticsDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sorting status bar -->
+    <div class="col-md-6">
+        <div class="dashboard-card h-100">
+            <div class="card-title">
+                <span><i class="fa-solid fa-chart-bar me-2 text-primary"></i> Sorting Action Summary</span>
+            </div>
+            <div style="height: 300px; position: relative;">
+                <canvas id="analyticsStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ChartJS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Analytics JS -->
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}
