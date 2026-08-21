@@ -125,19 +125,4 @@ You can simulate the conveyor belt and telemetry sensors in two ways:
    python scripts/run_simulator.py --interval 5
    ```
 
----
 
-## Evaluator Demonstration Walkthrough (5-10 Minutes)
-
-1. **Step 1: System Online Verification**
-   Open the Dashboard (`http://127.0.0.1:5000/dashboard`). Verify the top header displays a green `System Online` badge, showing live socket heartbeats from `SIM-001`.
-2. **Step 2: Start Simulator Stream**
-   Navigate to **Live Monitoring** on the sidebar. Click **Start Sim**. You will see weights, temperatures, and moisture dials updating every 5 seconds. The scrolling *Live Event Logging Console* will log events as they occur.
-3. **Step 3: Automated Waste Processing**
-   As the simulator uploads specimen images, watch the *Current Waste Specimen* panel. It will display the uploaded image, classify its material (e.g., Plastic), map it to a bin, and update the levels in real-time.
-4. **Step 4: Dynamic Bin Fill Increases**
-   Return to the **Dashboard**. Watch the *Bin Status* gauges. The progress bars will increment based on sorted waste volume. Once a container (e.g., Organic Bin) reaches 70% fill level, it will turn yellow (WARNING) and trigger a browser toast notification.
-5. **Step 5: Review Analytics Charts**
-   Go to the **Analytics** page. View the detailed doughnut distribution charts and bar summaries computed from the database history records.
-6. **Step 6: Reset Container (Manual Action)**
-   Navigate to **Bin Status** on the sidebar. Select a warning/full container and click **Empty Container**. Confirm the prompt. The level will reset to `0%` and propagate to the dashboard immediately.
